@@ -450,18 +450,22 @@ def run_daily_pipeline(settings: Settings, services: dict, date: str) -> None:
 
 def _parse_args() -> argparse.Namespace:
     """建立 CLI 參數解析。"""
+    # 共用 parent parser，讓所有子命令都繼承 --verbose
+    parent = argparse.ArgumentParser(add_help=False)
+    parent.add_argument(
+        "--verbose", "-v", action="store_true", help="開啟 DEBUG 日誌"
+    )
+
     parser = argparse.ArgumentParser(
         prog="yt-finance-analyzer",
         description="YouTube 財經影片自動分析系統",
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="開啟 DEBUG 日誌"
+        parents=[parent],
     )
 
     subparsers = parser.add_subparsers(dest="command", help="子命令")
 
     # run
-    p_run = subparsers.add_parser("run", help="執行完整每日管線")
+    p_run = subparsers.add_parser("run", parents=[parent], help="執行完整每日管線")
     p_run.add_argument(
         "--date",
         default=datetime.now().strftime("%Y-%m-%d"),
@@ -469,18 +473,18 @@ def _parse_args() -> argparse.Namespace:
     )
 
     # fetch
-    subparsers.add_parser("fetch", help="只抓取新影片")
+    subparsers.add_parser("fetch", parents=[parent], help="只抓取新影片")
 
     # analyze
-    p_analyze = subparsers.add_parser("analyze", help="只對已抓取影片做分析")
+    p_analyze = subparsers.add_parser("analyze", parents=[parent], help="只對已抓取影片做分析")
     p_analyze.add_argument("--date", required=True, help="目標日期 (YYYY-MM-DD)")
 
     # report
-    p_report = subparsers.add_parser("report", help="只產生報告")
+    p_report = subparsers.add_parser("report", parents=[parent], help="只產生報告")
     p_report.add_argument("--date", required=True, help="目標日期 (YYYY-MM-DD)")
 
     # weekly-report
-    p_weekly = subparsers.add_parser("weekly-report", help="產生每週彙整報告")
+    p_weekly = subparsers.add_parser("weekly-report", parents=[parent], help="產生每週彙整報告")
     p_weekly.add_argument(
         "--week-of",
         default=datetime.now().strftime("%Y-%m-%d"),
@@ -488,15 +492,15 @@ def _parse_args() -> argparse.Namespace:
     )
 
     # send
-    p_send = subparsers.add_parser("send", help="寄送每日報告 email")
+    p_send = subparsers.add_parser("send", parents=[parent], help="寄送每日報告 email")
     p_send.add_argument("--date", required=True, help="目標日期 (YYYY-MM-DD)")
 
     # send-weekly
-    p_send_weekly = subparsers.add_parser("send-weekly", help="寄送週報 email")
+    p_send_weekly = subparsers.add_parser("send-weekly", parents=[parent], help="寄送週報 email")
     p_send_weekly.add_argument("--week-of", required=True, help="指定日期所在的週")
 
     # status
-    p_status = subparsers.add_parser("status", help="查看處理狀態")
+    p_status = subparsers.add_parser("status", parents=[parent], help="查看處理狀態")
     p_status.add_argument("--date", required=True, help="目標日期 (YYYY-MM-DD)")
 
     return parser.parse_args()
