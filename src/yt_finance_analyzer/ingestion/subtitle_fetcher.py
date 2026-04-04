@@ -1,11 +1,10 @@
-"""透過 yt-dlp 抓取影片字幕或下載音訊，整合字幕/STT 流程產出逐字稿。"""
+"""透過 youtube-transcript-api 抓取字幕，或用 yt-dlp 下載音訊進行 STT。"""
 
 import logging
-import re
-import urllib.request
 from pathlib import Path
 
 import yt_dlp
+from youtube_transcript_api import YouTubeTranscriptApi
 
 from yt_finance_analyzer.config import Settings
 from yt_finance_analyzer.models import TranscriptResult, VideoFetchError
@@ -22,13 +21,13 @@ class SubtitleFetcher:
     def __init__(self, settings: Settings, stt_provider: STTProvider | None = None) -> None:
         self._settings = settings
         self._stt_provider = stt_provider
+        self._ytt = YouTubeTranscriptApi()
 
     @retry(max_retries=2, delay=3.0, backoff_factor=2.0, exceptions=(Exception,))
     def fetch_subtitle(self, video_id: str, language: str = "zh-TW") -> str | None:
-        """嘗試用 yt-dlp 抓取影片字幕。
+        """透過 youtube-transcript-api 抓取影片字幕。
 
-        透過 extract_info 取得字幕 URL，再直接下載 VTT 內容。
-        優先手動字幕，其次自動字幕。
+        優先手動字幕，其次自動產生字幕。
 
         Args:
             video_id: YouTube 影片 ID。
@@ -37,99 +36,52 @@ class SubtitleFetcher:
         Returns:
             字幕文字內容，若無字幕則回傳 None。
         """
-        url = f"https://www.youtube.com/watch?v={video_id}"
         logger.info("嘗試抓取字幕: %s (語言: %s)", video_id, language)
-
         lang_base = language.split("-")[0]
+        lang_candidates = [language, lang_base]
 
-        ydl_opts = {"skip_download": True, "quiet": True, "no_warnings": True}
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
+            transcript_list = self._ytt.list(video_id)
         except Exception as exc:
-            logger.warning("取得影片資訊失敗 %s: %s", video_id, exc)
+            logger.warning("列出字幕失敗 %s: %s", video_id, exc)
             return None
 
-        if not info:
-            return None
-
-        # 嘗試順序：手動字幕 -> 自動字幕
-        for sub_key, sub_type in (("subtitles", "手動"), ("automatic_captions", "自動")):
-            subs = info.get(sub_key, {})
-            for lang in (language, lang_base):
-                if lang not in subs:
-                    continue
-                # 在可用格式中找 vtt
-                vtt_url = None
-                for entry in subs[lang]:
-                    if entry.get("ext") == "vtt":
-                        vtt_url = entry.get("url")
-                        break
-                if not vtt_url:
-                    continue
-
-                logger.info("下載%s字幕: %s (語言: %s)", sub_type, video_id, lang)
-                vtt_content = self._download_vtt(vtt_url)
-                if vtt_content:
-                    text = self._parse_vtt_content(vtt_content)
-                    if text:
-                        # 儲存原始 VTT 檔案供除錯
-                        self._save_vtt(video_id, lang, vtt_content)
-                        logger.info(
-                            "取得%s字幕: %s (語言: %s, %d 字元)",
-                            sub_type, video_id, lang, len(text),
-                        )
-                        return text
-
-        logger.info("影片 %s 無可用字幕", video_id)
-        return None
-
-    def _download_vtt(self, vtt_url: str) -> str | None:
-        """從 URL 下載 VTT 字幕內容。"""
+        # 優先手動字幕，其次自動字幕
+        transcript = None
+        source_type = ""
         try:
-            req = urllib.request.Request(vtt_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return resp.read().decode("utf-8")
-        except Exception as exc:
-            logger.warning("下載 VTT 字幕失敗: %s", exc)
+            transcript = transcript_list.find_transcript(lang_candidates)
+            source_type = "手動"
+        except Exception:
+            try:
+                transcript = transcript_list.find_generated_transcript(lang_candidates)
+                source_type = "自動"
+            except Exception:
+                logger.info("影片 %s 無可用字幕 (語言: %s)", video_id, language)
+                return None
+
+        # 取得字幕內容
+        snippets = transcript.fetch()
+        text = "\n".join(entry.text for entry in snippets)
+
+        if not text.strip():
+            logger.info("影片 %s 字幕內容為空", video_id)
             return None
 
-    def _save_vtt(self, video_id: str, lang: str, content: str) -> None:
-        """儲存原始 VTT 檔案供除錯。"""
+        # 儲存供除錯
+        self._save_transcript(video_id, language, text)
+        logger.info(
+            "取得%s字幕: %s (語言: %s, %d 字元)",
+            source_type, video_id, language, len(text),
+        )
+        return text
+
+    def _save_transcript(self, video_id: str, lang: str, content: str) -> None:
+        """儲存字幕文字檔供除錯。"""
         output_dir = self._settings.transcripts_dir / video_id
         output_dir.mkdir(parents=True, exist_ok=True)
-        vtt_path = output_dir / f"{video_id}.{lang}.vtt"
-        vtt_path.write_text(content, encoding="utf-8")
-
-    def _parse_vtt_content(self, vtt_content: str) -> str | None:
-        """解析 VTT 字幕內容為純文字。"""
-        lines: list[str] = []
-        for line in vtt_content.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith("WEBVTT"):
-                continue
-            if line.startswith("Kind:") or line.startswith("Language:"):
-                continue
-            if re.match(r"^\d{2}:\d{2}:\d{2}\.\d{3}\s*-->", line):
-                continue
-            if re.match(r"^\d+$", line):
-                continue
-            # 移除 VTT 標記 (e.g., <c>, </c>, <00:00:01.000>)
-            line = re.sub(r"<[^>]+>", "", line)
-            if line:
-                lines.append(line)
-
-        # 去重（VTT 自動字幕常有重複行）
-        seen: set[str] = set()
-        unique: list[str] = []
-        for line in lines:
-            if line not in seen:
-                seen.add(line)
-                unique.append(line)
-
-        return "\n".join(unique) if unique else None
+        txt_path = output_dir / f"{video_id}.{lang}.txt"
+        txt_path.write_text(content, encoding="utf-8")
 
     @retry(max_retries=2, delay=3.0, backoff_factor=2.0, exceptions=(Exception,))
     def download_audio(self, video_id: str) -> Path:
