@@ -1,0 +1,55 @@
+name: Weekly Report
+
+on:
+  schedule:
+    # UTC 01:00 = 台灣 09:00，週日
+    - cron: '0 1 * * 0'
+  workflow_dispatch:
+    inputs:
+      week-of:
+        description: '指定日期所在的週 (YYYY-MM-DD)，留空則為昨天'
+        required: false
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+    env:
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      TZ: Asia/Taipei
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/db
+            data/analysis
+          key: data-cache-${{ github.run_id }}
+          restore-keys: data-cache-
+
+      - name: Generate and send weekly report
+        run: |
+          WEEK_OF="${{ github.event.inputs.week-of }}"
+          if [ -z "$WEEK_OF" ]; then
+            WEEK_OF=$(date -d "yesterday" +%Y-%m-%d 2>/dev/null || date -v-1d +%Y-%m-%d)
+          fi
+          echo "Week of: $WEEK_OF"
+          yt-finance-analyzer weekly-report --week-of "$WEEK_OF" --verbose
+          yt-finance-analyzer send-weekly --week-of "$WEEK_OF" --verbose
