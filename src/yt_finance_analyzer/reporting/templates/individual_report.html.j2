@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ analysis.title }} — 財經影片分析</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f7f8fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#333;line-height:1.6;">
+<div style="max-width:700px;margin:0 auto;background:#fff;padding:0;">
+
+  {# Disclaimer #}
+  <div style="background:#fff3cd;border-bottom:2px solid #ffc107;padding:12px 24px;text-align:center;font-size:13px;color:#856404;">
+    &#9888;&#65039; 以下為 AI 分析整理，不構成投資建議。請獨立判斷，審慎評估風險。
+  </div>
+
+  {# Header #}
+  <div style="background:#1a365d;color:#fff;padding:24px;">
+    <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;">{{ analysis.title }}</h1>
+    <p style="margin:0;font-size:14px;opacity:0.85;">
+      {{ analysis.channel_name }} &middot; {{ analysis.published_at.strftime('%Y-%m-%d') }}
+    </p>
+    <p style="margin:8px 0 0;font-size:13px;">
+      <a href="{{ analysis.url }}" style="color:#90cdf4;text-decoration:none;">&#128279; 觀看影片</a>
+    </p>
+    {# Sentiment badge #}
+    <div style="margin-top:12px;">
+      {% if analysis.speaker_sentiment == 'bullish' %}
+      <span style="display:inline-block;background:#38a169;color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">&#128200; 偏多 Bullish</span>
+      {% elif analysis.speaker_sentiment == 'bearish' %}
+      <span style="display:inline-block;background:#e53e3e;color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">&#128201; 偏空 Bearish</span>
+      {% elif analysis.speaker_sentiment == 'mixed' %}
+      <span style="display:inline-block;background:#d69e2e;color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">&#128256; 混合 Mixed</span>
+      {% else %}
+      <span style="display:inline-block;background:#718096;color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">&#9898; 中性 Neutral</span>
+      {% endif %}
+      <span style="display:inline-block;background:rgba(255,255,255,0.2);color:#fff;padding:4px 12px;border-radius:12px;font-size:12px;margin-left:6px;">
+        信心: {{ analysis.confidence_level }}
+      </span>
+    </div>
+  </div>
+
+  {# Summary #}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 8px;font-size:16px;color:#1a365d;">&#128203; 摘要</h2>
+    <p style="margin:0 0 12px;font-size:15px;font-weight:600;color:#2d3748;">{{ analysis.summary_short }}</p>
+    <p style="margin:0;font-size:14px;color:#4a5568;">{{ analysis.summary_long }}</p>
+  </div>
+
+  {# Bullet points #}
+  {% if analysis.bullet_points %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128161; 重點整理</h2>
+    <ul style="margin:0;padding-left:20px;">
+      {% for point in analysis.bullet_points %}
+      <li style="margin-bottom:8px;font-size:14px;color:#2d3748;">{{ point }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Bullish / Bearish cards #}
+  {% if analysis.bullish_points or analysis.bearish_points %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128200;&#128201; 多空觀點</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        {% if analysis.bullish_points %}
+        <td style="width:50%;vertical-align:top;padding-right:8px;">
+          <div style="background:#f0fff4;border:1px solid #c6f6d5;border-radius:8px;padding:12px;">
+            <h3 style="margin:0 0 8px;font-size:14px;color:#276749;">&#128994; 偏多觀點</h3>
+            <ul style="margin:0;padding-left:16px;font-size:13px;color:#2d3748;">
+              {% for p in analysis.bullish_points %}
+              <li style="margin-bottom:6px;">{{ p }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </td>
+        {% endif %}
+        {% if analysis.bearish_points %}
+        <td style="width:50%;vertical-align:top;padding-left:8px;">
+          <div style="background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;padding:12px;">
+            <h3 style="margin:0 0 8px;font-size:14px;color:#9b2c2c;">&#128308; 偏空觀點</h3>
+            <ul style="margin:0;padding-left:16px;font-size:13px;color:#2d3748;">
+              {% for p in analysis.bearish_points %}
+              <li style="margin-bottom:6px;">{{ p }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+    </table>
+  </div>
+  {% endif %}
+
+  {# Keywords #}
+  {% if analysis.keywords %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#127991;&#65039; 關鍵字</h2>
+    <div>
+      {% for kw in analysis.keywords %}
+      <span style="display:inline-block;background:#ebf4ff;color:#2b6cb0;padding:4px 10px;border-radius:12px;font-size:12px;margin:0 6px 6px 0;">{{ kw }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Industries & Assets table #}
+  {% if analysis.industries or analysis.mentioned_tickers_or_assets %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#127981; 產業與標的</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        {% if analysis.industries %}
+        <td style="vertical-align:top;width:50%;padding-right:8px;">
+          <h3 style="margin:0 0 8px;font-size:14px;color:#4a5568;">產業</h3>
+          <ul style="margin:0;padding-left:16px;font-size:13px;">
+            {% for ind in analysis.industries %}
+            <li style="margin-bottom:4px;">{{ ind }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+        {% endif %}
+        {% if analysis.mentioned_tickers_or_assets %}
+        <td style="vertical-align:top;width:50%;padding-left:8px;">
+          <h3 style="margin:0 0 8px;font-size:14px;color:#4a5568;">提及標的</h3>
+          <ul style="margin:0;padding-left:16px;font-size:13px;">
+            {% for asset in analysis.mentioned_tickers_or_assets %}
+            <li style="margin-bottom:4px;">{{ asset }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+        {% endif %}
+      </tr>
+    </table>
+  </div>
+  {% endif %}
+
+  {# Macro factors #}
+  {% if analysis.macro_factors %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#127758; 總經因素</h2>
+    <ul style="margin:0;padding-left:20px;font-size:14px;">
+      {% for factor in analysis.macro_factors %}
+      <li style="margin-bottom:6px;">{{ factor }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Claims explicit #}
+  {% if analysis.claims_explicit %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">
+      &#127919; 講者明確提到
+    </h2>
+    <ul style="margin:0;padding-left:20px;font-size:14px;">
+      {% for claim in analysis.claims_explicit %}
+      <li style="margin-bottom:6px;">{{ claim }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Inferred insights #}
+  {% if analysis.inferred_insights %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;background:#f7f8fa;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">
+      &#129302; 模型推論
+    </h2>
+    <ul style="margin:0;padding-left:20px;font-size:14px;color:#4a5568;">
+      {% for insight in analysis.inferred_insights %}
+      <li style="margin-bottom:6px;">{{ insight }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Watchlist #}
+  {% if analysis.actionable_watchlist %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128270; 追蹤清單</h2>
+    <div>
+      {% for item in analysis.actionable_watchlist %}
+      <span style="display:inline-block;background:#fefcbf;color:#975a16;padding:4px 10px;border-radius:12px;font-size:12px;margin:0 6px 6px 0;border:1px solid #f6e05e;">{{ item }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Risk warnings #}
+  {% if analysis.risk_warnings %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#9888;&#65039; 風險提醒</h2>
+    <div style="background:#fff5f5;border:2px solid #fc8181;border-radius:8px;padding:12px;">
+      <ul style="margin:0;padding-left:16px;font-size:14px;color:#9b2c2c;">
+        {% for risk in analysis.risk_warnings %}
+        <li style="margin-bottom:6px;">{{ risk }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Notable quotes #}
+  {% if analysis.notable_quotes %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128172; 重要原文摘錄</h2>
+    {% for quote in analysis.notable_quotes %}
+    <blockquote style="margin:0 0 12px;padding:10px 16px;border-left:4px solid #1a365d;background:#f7f8fa;font-size:14px;color:#4a5568;font-style:italic;">
+      「{{ quote }}」
+    </blockquote>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Footer #}
+  <div style="padding:16px 24px;text-align:center;font-size:12px;color:#a0aec0;border-top:1px solid #e2e8f0;">
+    <p style="margin:0;">本報告由 YT Finance Analyzer 自動產生 &middot; 僅供參考，不構成投資建議</p>
+  </div>
+
+</div>
+</body>
+</html>

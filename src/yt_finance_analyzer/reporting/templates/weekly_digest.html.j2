@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>財經週報 — {{ trend.week_start }} ~ {{ trend.week_end }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f7f8fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#333;line-height:1.6;">
+<div style="max-width:700px;margin:0 auto;background:#fff;padding:0;">
+
+  {# Disclaimer #}
+  <div style="background:#fff3cd;border-bottom:2px solid #ffc107;padding:12px 24px;text-align:center;font-size:13px;color:#856404;">
+    &#9888;&#65039; 以下為 AI 分析整理，不構成投資建議。請獨立判斷，審慎評估風險。
+  </div>
+
+  {# Header #}
+  <div style="background:#1a365d;color:#fff;padding:24px;">
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;">&#128202; 財經週報</h1>
+    <p style="margin:0;font-size:16px;opacity:0.9;">{{ trend.week_start }} ~ {{ trend.week_end }}</p>
+    <p style="margin:8px 0 0;font-size:14px;opacity:0.75;">共分析 {{ trend.total_videos_analyzed }} 支影片</p>
+    {# Overall sentiment #}
+    <div style="margin-top:12px;">
+      {% if trend.overall_sentiment == 'bullish' %}
+      <span style="display:inline-block;background:#38a169;color:#fff;padding:6px 16px;border-radius:12px;font-size:14px;font-weight:600;">&#128200; 本週偏多</span>
+      {% elif trend.overall_sentiment == 'bearish' %}
+      <span style="display:inline-block;background:#e53e3e;color:#fff;padding:6px 16px;border-radius:12px;font-size:14px;font-weight:600;">&#128201; 本週偏空</span>
+      {% elif trend.overall_sentiment == 'mixed' %}
+      <span style="display:inline-block;background:#d69e2e;color:#fff;padding:6px 16px;border-radius:12px;font-size:14px;font-weight:600;">&#128256; 本週混合</span>
+      {% else %}
+      <span style="display:inline-block;background:#718096;color:#fff;padding:6px 16px;border-radius:12px;font-size:14px;font-weight:600;">&#9898; 本週中性</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Weekly narrative #}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128203; 本週概述</h2>
+    <p style="margin:0;font-size:14px;color:#2d3748;">{{ trend.weekly_narrative }}</p>
+  </div>
+
+  {# Sentiment trend #}
+  {% if trend.sentiment_trend %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128200; 情緒趨勢</h2>
+    <p style="margin:0;font-size:14px;color:#2d3748;">{{ trend.sentiment_trend }}</p>
+  </div>
+  {% endif %}
+
+  {# High frequency keywords #}
+  {% if trend.high_frequency_keywords %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128293; 高頻關鍵字</h2>
+    <div>
+      {% for kw in trend.high_frequency_keywords %}
+      <span style="display:inline-block;background:#ebf4ff;color:#2b6cb0;padding:4px 10px;border-radius:12px;font-size:12px;margin:0 6px 6px 0;">{{ kw }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Top industries #}
+  {% if trend.top_industries %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#127981; 熱門產業</h2>
+    <ol style="margin:0;padding-left:20px;font-size:14px;">
+      {% for ind in trend.top_industries %}
+      <li style="margin-bottom:4px;">{{ ind }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  {# Top assets #}
+  {% if trend.top_assets %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128176; 熱門標的</h2>
+    <ol style="margin:0;padding-left:20px;font-size:14px;">
+      {% for asset in trend.top_assets %}
+      <li style="margin-bottom:4px;">{{ asset }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  {# Recommended watchlist #}
+  {% if trend.recommended_watchlist %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128270; 本週推薦追蹤</h2>
+    <div>
+      {% for item in trend.recommended_watchlist %}
+      <span style="display:inline-block;background:#fefcbf;color:#975a16;padding:4px 10px;border-radius:12px;font-size:12px;margin:0 6px 6px 0;border:1px solid #f6e05e;">{{ item }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# Strong conviction items #}
+  {% if trend.strong_conviction_items %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128170; 強烈語氣項目</h2>
+    <ul style="margin:0;padding-left:20px;font-size:14px;">
+      {% for item in trend.strong_conviction_items %}
+      <li style="margin-bottom:6px;">{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Risk summary #}
+  {% if trend.risk_summary %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#9888;&#65039; 風險摘要</h2>
+    <div style="background:#fff5f5;border:2px solid #fc8181;border-radius:8px;padding:12px;">
+      <ul style="margin:0;padding-left:16px;font-size:14px;color:#9b2c2c;">
+        {% for risk in trend.risk_summary %}
+        <li style="margin-bottom:6px;">{{ risk }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Daily summary cards #}
+  {% if daily_trends %}
+  <div style="padding:20px 24px;border-bottom:1px solid #e2e8f0;">
+    <h2 style="margin:0 0 12px;font-size:16px;color:#1a365d;">&#128197; 每日摘要回顧</h2>
+    {% for day in daily_trends %}
+    <div style="background:#f7f8fa;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;">
+      <div style="margin-bottom:6px;">
+        <span style="font-size:14px;font-weight:600;color:#1a365d;">{{ day.date }}</span>
+        <span style="font-size:12px;color:#718096;margin-left:8px;">{{ day.total_videos_analyzed }} 支影片</span>
+        {% if day.overall_sentiment == 'bullish' %}
+        <span style="display:inline-block;background:#c6f6d5;color:#276749;padding:2px 8px;border-radius:8px;font-size:11px;margin-left:6px;">偏多</span>
+        {% elif day.overall_sentiment == 'bearish' %}
+        <span style="display:inline-block;background:#fed7d7;color:#9b2c2c;padding:2px 8px;border-radius:8px;font-size:11px;margin-left:6px;">偏空</span>
+        {% elif day.overall_sentiment == 'mixed' %}
+        <span style="display:inline-block;background:#fefcbf;color:#975a16;padding:2px 8px;border-radius:8px;font-size:11px;margin-left:6px;">混合</span>
+        {% else %}
+        <span style="display:inline-block;background:#e2e8f0;color:#4a5568;padding:2px 8px;border-radius:8px;font-size:11px;margin-left:6px;">中性</span>
+        {% endif %}
+      </div>
+      <p style="margin:0;font-size:13px;color:#4a5568;">{{ day.daily_narrative[:150] }}{% if day.daily_narrative|length > 150 %}...{% endif %}</p>
+      {% if day.recommended_watchlist %}
+      <div style="margin-top:6px;">
+        {% for item in day.recommended_watchlist[:5] %}
+        <span style="display:inline-block;background:#ebf4ff;color:#2b6cb0;padding:2px 6px;border-radius:6px;font-size:11px;margin:0 4px 4px 0;">{{ item }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Footer #}
+  <div style="padding:16px 24px;text-align:center;font-size:12px;color:#a0aec0;border-top:1px solid #e2e8f0;">
+    <p style="margin:0;">本報告由 YT Finance Analyzer 自動產生 &middot; 僅供參考，不構成投資建議</p>
+  </div>
+
+</div>
+</body>
+</html>
