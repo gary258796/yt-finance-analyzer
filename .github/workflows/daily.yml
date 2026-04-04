@@ -23,6 +23,7 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
       EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      CHANNELS_CONFIG: ${{ secrets.CHANNELS_CONFIG }}
       TZ: Asia/Taipei
 
     steps:

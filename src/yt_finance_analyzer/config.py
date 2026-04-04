@@ -1,5 +1,6 @@
 """應用程式設定模組，使用 pydantic-settings 從 .env 讀取設定，並載入 channels.yaml。"""
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -91,15 +92,23 @@ class Settings(BaseSettings):
 
 
 def load_channels(config_path: Path | None = None) -> list[ChannelConfig]:
-    """從 channels.yaml 載入頻道設定，僅回傳 enabled=True 的頻道。"""
+    """從 channels.yaml 或環境變數 CHANNELS_CONFIG 載入頻道設定。
+
+    優先順序：檔案 > 環境變數。僅回傳 enabled=True 的頻道。
+    """
     if config_path is None:
         config_path = Path("config/channels.yaml")
 
-    if not config_path.exists():
-        return []
-
-    with open(config_path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+    # 優先讀取檔案
+    if config_path.exists():
+        with open(config_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    else:
+        # Fallback：從環境變數 CHANNELS_CONFIG 讀取 YAML 內容
+        raw = os.environ.get("CHANNELS_CONFIG", "")
+        if not raw:
+            return []
+        data = yaml.safe_load(raw)
 
     if not data or "channels" not in data:
         return []

@@ -1,6 +1,7 @@
 channels:
-  - channel_id: "UC_CHANNEL_ID"
-    handle: "@channel_handle"    # channel_id 和 handle 至少填一個
+  # channel_id 和 handle 至少填一個
+  - channel_id: "UC_EXAMPLE_1"
+    handle: "@example_handle"
     name: "頻道名稱"
-    language: "zh-TW"            # zh-TW 或 en
-    enabled: true                # false 可暫時停用
+    language: "zh-TW"
+    enabled: true
