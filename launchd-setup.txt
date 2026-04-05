@@ -1,0 +1,106 @@
+# ============================================================
+# macOS launchd 排程設定步驟
+# 每天 11:30 執行每日管線，每週日 09:00 執行週報
+# ============================================================
+
+# --------------------------------------------------
+# 1. 建立每日管線 plist
+# --------------------------------------------------
+cat > ~/Library/LaunchAgents/com.yt-finance-analyzer.daily.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.yt-finance-analyzer.daily</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-c</string>
+        <string>cd /Path/to/yt-finance-analyzer && /opt/homebrew/Caskroom/miniconda/base/bin/yt-finance-analyzer run --verbose >> /Path/to/yt-finance-analyzer/data/daily.log 2>&1</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>11</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardErrorPath</key>
+    <string>/Path/to/yt-finance-analyzer/data/launchd-daily-error.log</string>
+</dict>
+</plist>
+EOF
+
+# --------------------------------------------------
+# 2. 建立週報 plist（每週日 09:00）
+# --------------------------------------------------
+cat > ~/Library/LaunchAgents/com.yt-finance-analyzer.weekly.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.yt-finance-analyzer.weekly</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-c</string>
+        <string>cd /Path/to/yt-finance-analyzer && WEEK_OF=$(date -v-1d +%%Y-%%m-%%d) && /opt/homebrew/Caskroom/miniconda/base/bin/yt-finance-analyzer weekly-report --week-of "$WEEK_OF" --verbose && /opt/homebrew/Caskroom/miniconda/base/bin/yt-finance-analyzer send-weekly --week-of "$WEEK_OF" --verbose >> /Path/to/yt-finance-analyzer/data/weekly.log 2>&1</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>0</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardErrorPath</key>
+    <string>/Path/to/yt-finance-analyzer/data/launchd-weekly-error.log</string>
+</dict>
+</plist>
+EOF
+
+# --------------------------------------------------
+# 3. 確保 data 目錄存在（log 用）
+# --------------------------------------------------
+mkdir -p /Path/to/yt-finance-analyzer/data
+
+# --------------------------------------------------
+# 4. 載入排程
+# --------------------------------------------------
+launchctl load ~/Library/LaunchAgents/com.yt-finance-analyzer.daily.plist
+launchctl load ~/Library/LaunchAgents/com.yt-finance-analyzer.weekly.plist
+
+# --------------------------------------------------
+# 5. 確認排程已載入
+# --------------------------------------------------
+launchctl list | grep yt-finance
+
+# --------------------------------------------------
+# 手動立即測試（不用等排程時間）
+# --------------------------------------------------
+# launchctl start com.yt-finance-analyzer.daily
+# launchctl start com.yt-finance-analyzer.weekly
+
+# --------------------------------------------------
+# 查看 log
+# --------------------------------------------------
+# tail -f /Path/to/yt-finance-analyzer/data/daily.log
+# tail -f /Path/to/yt-finance-analyzer/data/weekly.log
+
+# --------------------------------------------------
+# 停用排程
+# --------------------------------------------------
+# launchctl unload ~/Library/LaunchAgents/com.yt-finance-analyzer.daily.plist
+# launchctl unload ~/Library/LaunchAgents/com.yt-finance-analyzer.weekly.plist
+
+# --------------------------------------------------
+# 移除排程（完全刪除）
+# --------------------------------------------------
+# launchctl unload ~/Library/LaunchAgents/com.yt-finance-analyzer.daily.plist
+# rm ~/Library/LaunchAgents/com.yt-finance-analyzer.daily.plist
+# launchctl unload ~/Library/LaunchAgents/com.yt-finance-analyzer.weekly.plist
+# rm ~/Library/LaunchAgents/com.yt-finance-analyzer.weekly.plist
