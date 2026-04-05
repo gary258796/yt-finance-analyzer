@@ -26,14 +26,14 @@ class SubtitleFetcher:
 
     @staticmethod
     def _resolve_cookies(path_str: str) -> str | None:
-        """檢查 cookies 檔案是否存在且非空，回傳有效路徑或 None。"""
+        """檢查 cookies 檔案是否存在且非空，回傳絕對路徑或 None。"""
         if not path_str:
             return None
-        p = Path(path_str)
+        p = Path(path_str).resolve()
         if p.is_file() and p.stat().st_size > 0:
-            logger.info("使用 cookies 檔案: %s", p)
+            logger.info("使用 cookies 檔案: %s (%d bytes)", p, p.stat().st_size)
             return str(p)
-        logger.warning("cookies 檔案不存在或為空，忽略: %s", path_str)
+        logger.warning("cookies 檔案不存在或為空，忽略: %s (resolved: %s)", path_str, p)
         return None
 
     @retry(max_retries=2, delay=3.0, backoff_factor=2.0, exceptions=(Exception,))
@@ -58,6 +58,7 @@ class SubtitleFetcher:
         ydl_opts: dict = {"skip_download": True, "quiet": True, "no_warnings": True}
         if self._cookies_file:
             ydl_opts["cookiefile"] = self._cookies_file
+            logger.debug("yt-dlp cookiefile: %s", self._cookies_file)
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
