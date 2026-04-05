@@ -169,3 +169,4 @@ yt-finance-analyzer/
 - **Gmail SMTP**：需使用[應用程式密碼](https://support.google.com/accounts/answer/185833)，不能用帳號密碼。
 - **語言**：中文（zh-TW）影片的分析結果為繁體中文，英文影片為英文。
 - **報告聲明**：所有報告皆含 AI 分析免責聲明，模型推論與講者明確論點分開標示。
+- **目前 Workflow**：無法成功讓 github workflow 透過 cookies.txt 取得字幕。 待解決。
