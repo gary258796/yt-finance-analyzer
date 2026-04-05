@@ -38,22 +38,18 @@ jobs:
         run: pip install -e .
 
       - name: Restore cookies.txt
-        run: echo "${{ secrets.YOUTUBE_COOKIES_BASE64 }}" | base64 --decode > cookies.txt
+        run: echo "$YOUTUBE_COOKIES_BASE64" | base64 --decode > cookies.txt
+        env:
+          YOUTUBE_COOKIES_BASE64: ${{ secrets.YOUTUBE_COOKIES_BASE64 }}
 
-      - name: Restore data cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/db
-            data/analysis
-          key: data-cache-${{ github.run_id }}
-          restore-keys: data-cache-
-
-      - name: Run daily pipeline
+      - name: Debug cookies
         run: |
-          DATE="${{ github.event.inputs.date }}"
-          if [ -z "$DATE" ]; then
-            DATE=$(date +%Y-%m-%d)
-          fi
-          echo "Processing date: $DATE"
-          yt-finance-analyzer run --date "$DATE" --verbose
+          echo "=== 檔案是否存在 ==="
+          ls -la cookies.txt 2>&1 || echo "NOT FOUND"
+          echo "=== 檔案大小 (bytes) ==="
+          wc -c < cookies.txt 2>/dev/null || echo "0"
+          echo "=== 前 3 行內容 ==="
+          head -3 cookies.txt 2>/dev/null || echo "EMPTY"
+          echo "=== YOUTUBE_COOKIES_FILE env ==="
+          echo "$YOUTUBE_COOKIES_FILE"
+
