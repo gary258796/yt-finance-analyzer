@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     max_videos_per_day: int = 20
     max_transcript_chars: int = 50000
 
+    # yt-dlp cookies（可選，解決 YouTube 封鎖問題）
+    youtube_cookies_file: str = ""
+
     # Data directory
     data_dir: Path = Path("./data")
 

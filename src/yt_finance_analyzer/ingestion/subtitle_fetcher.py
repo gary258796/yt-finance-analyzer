@@ -22,6 +22,7 @@ class SubtitleFetcher:
     def __init__(self, settings: Settings, stt_provider: STTProvider | None = None) -> None:
         self._settings = settings
         self._stt_provider = stt_provider
+        self._cookies_file = settings.youtube_cookies_file or None
 
     @retry(max_retries=2, delay=3.0, backoff_factor=2.0, exceptions=(Exception,))
     def fetch_subtitle(self, video_id: str, language: str = "zh-TW") -> str | None:
@@ -42,7 +43,9 @@ class SubtitleFetcher:
 
         lang_base = language.split("-")[0]
 
-        ydl_opts = {"skip_download": True, "quiet": True, "no_warnings": True}
+        ydl_opts: dict = {"skip_download": True, "quiet": True, "no_warnings": True}
+        if self._cookies_file:
+            ydl_opts["cookiefile"] = self._cookies_file
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -155,7 +158,7 @@ class SubtitleFetcher:
 
         logger.info("下載音訊: %s", video_id)
 
-        ydl_opts = {
+        ydl_opts: dict = {
             "format": "bestaudio[abr<=128]",
             "outtmpl": str(output_dir / f"{video_id}.%(ext)s"),
             "postprocessors": [
@@ -168,6 +171,8 @@ class SubtitleFetcher:
             "quiet": True,
             "no_warnings": True,
         }
+        if self._cookies_file:
+            ydl_opts["cookiefile"] = self._cookies_file
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
