@@ -24,6 +24,7 @@ jobs:
       EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
       EMAIL_TO: ${{ secrets.EMAIL_TO }}
       CHANNELS_CONFIG: ${{ secrets.CHANNELS_CONFIG }}
+      YOUTUBE_COOKIES_FILE: ./cookies.txt
       TZ: Asia/Taipei
 
     steps:
@@ -35,6 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -e .
+
+      - name: Restore cookies.txt
+        run: echo "${{ secrets.YOUTUBE_COOKIES_BASE64 }}" | base64 --decode > cookies.txt
 
       - name: Restore data cache
         uses: actions/cache@v4
