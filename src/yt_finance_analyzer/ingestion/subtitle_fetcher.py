@@ -22,7 +22,19 @@ class SubtitleFetcher:
     def __init__(self, settings: Settings, stt_provider: STTProvider | None = None) -> None:
         self._settings = settings
         self._stt_provider = stt_provider
-        self._cookies_file = settings.youtube_cookies_file or None
+        self._cookies_file = self._resolve_cookies(settings.youtube_cookies_file)
+
+    @staticmethod
+    def _resolve_cookies(path_str: str) -> str | None:
+        """檢查 cookies 檔案是否存在且非空，回傳有效路徑或 None。"""
+        if not path_str:
+            return None
+        p = Path(path_str)
+        if p.is_file() and p.stat().st_size > 0:
+            logger.info("使用 cookies 檔案: %s", p)
+            return str(p)
+        logger.warning("cookies 檔案不存在或為空，忽略: %s", path_str)
+        return None
 
     @retry(max_retries=2, delay=3.0, backoff_factor=2.0, exceptions=(Exception,))
     def fetch_subtitle(self, video_id: str, language: str = "zh-TW") -> str | None:
