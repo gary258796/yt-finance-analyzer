@@ -53,3 +53,20 @@ jobs:
           echo "=== YOUTUBE_COOKIES_FILE env ==="
           echo "$YOUTUBE_COOKIES_FILE"
 
+      - name: Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/db
+            data/analysis
+          key: data-cache-${{ github.run_id }}
+          restore-keys: data-cache-
+
+      - name: Run daily pipeline
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          if [ -z "$DATE" ]; then
+            DATE=$(date +%Y-%m-%d)
+          fi
+          echo "Processing date: $DATE"
+          yt-finance-analyzer run --date "$DATE" --verbose
